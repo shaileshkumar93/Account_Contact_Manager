@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <defaultLandingTab>AccountContactManager</defaultLandingTab>
+    <description>App for managing Accounts and their related Contacts with inline editing.</description>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isServiceCloudConsole>false</isServiceCloudConsole>
+    <label>Account Contact Manager</label>
+    <navType>Standard</navType>
+    <tabs>standard-home</tabs>
+    <tabs>standard-Account</tabs>
+    <tabs>standard-Contact</tabs>
+    <tabs>AccountContactManager</tabs>
+    <uiType>Lightning</uiType>
+    <formFactors>Large</formFactors>
+    <formFactors>Small</formFactors>
+</CustomApplication>

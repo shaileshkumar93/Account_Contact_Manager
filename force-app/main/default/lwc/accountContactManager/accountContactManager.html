@@ -1,0 +1,401 @@
+<template>
+    <lightning-card title="Accounts &amp; Contacts" icon-name="standard:account">
+        <div slot="actions">
+            <lightning-button
+                label="Save All Changes"
+                variant="brand"
+                onclick={saveAllChanges}
+                disabled={hasNoDraftChanges}
+            ></lightning-button>
+        </div>
+
+        <div class="slds-p-around_small">
+
+            <!-- Error / Success Toasts rendered via ShowToast -->
+
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+
+                <!-- Pagination Top -->
+                <div class="pagination-bar slds-m-bottom_small">
+                    <lightning-button
+                        label="Previous"
+                        icon-name="utility:chevronleft"
+                        onclick={handlePrev}
+                        disabled={isPrevDisabled}
+                    ></lightning-button>
+                    <span class="slds-m-horizontal_medium page-info">
+                        Page {currentPage} of {totalPages} &nbsp;|&nbsp; {totalCount} Records
+                    </span>
+                    <lightning-button
+                        label="Next"
+                        icon-name="utility:chevronright"
+                        icon-position="right"
+                        onclick={handleNext}
+                        disabled={isNextDisabled}
+                    ></lightning-button>
+
+                    <lightning-combobox
+                        label="Rows per page"
+                        variant="label-hidden"
+                        value={pageSize}
+                        options={pageSizeOptions}
+                        onchange={handlePageSizeChange}
+                        class="page-size-select"
+                    ></lightning-combobox>
+                </div>
+
+                <!-- Table -->
+                <div class="table-container">
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th class="col-toggle" scope="col"><span class="slds-assistive-text">Expand</span></th>
+                                <th scope="col"><div class="slds-truncate">Account Name</div></th>
+                                <th scope="col"><div class="slds-truncate">Phone</div></th>
+                                <th scope="col"><div class="slds-truncate">Industry</div></th>
+                                <th scope="col"><div class="slds-truncate">Annual Revenue</div></th>
+                                <th class="col-actions" scope="col"><span class="slds-assistive-text">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={processedAccounts} for:item="account">
+                                <!-- Account Row -->
+                                <tr key={account.Id} class={account.rowClass}>
+                                    <!-- Expand Toggle -->
+                                    <td class="col-toggle">
+                                        <lightning-button-icon
+                                            icon-name={account.expandIcon}
+                                            variant="bare"
+                                            size="small"
+                                            alternative-text="Toggle Contacts"
+                                            data-record-id={account.Id}
+                                            onclick={handleToggleExpand}
+                                        ></lightning-button-icon>
+                                        <span class="slds-badge slds-badge_lightest contact-count">{account.contactCount}</span>
+                                    </td>
+
+                                    <!-- Account Name -->
+                                    <td data-record-id={account.Id} data-field="Name" data-type="account">
+                                        <template if:false={account.isEditing}>
+                                            <span class="editable-cell" onclick={handleCellClick} data-record-id={account.Id} data-field="Name" data-type="account">
+                                                {account.Name}
+                                                <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                            </span>
+                                        </template>
+                                        <template if:true={account.isEditing}>
+                                            <lightning-input
+                                                value={account.Name}
+                                                data-record-id={account.Id}
+                                                data-field="Name"
+                                                data-type="account"
+                                                onchange={handleFieldChange}
+                                                variant="label-hidden"
+                                                label="Name"
+                                            ></lightning-input>
+                                        </template>
+                                    </td>
+
+                                    <!-- Phone -->
+                                    <td data-record-id={account.Id} data-field="Phone" data-type="account">
+                                        <template if:false={account.isEditing}>
+                                            <span class="editable-cell" onclick={handleCellClick} data-record-id={account.Id} data-field="Phone" data-type="account">
+                                                <template if:true={account.Phone}>{account.Phone}</template>
+                                                <template if:false={account.Phone}><span class="empty-cell">—</span></template>
+                                                <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                            </span>
+                                        </template>
+                                        <template if:true={account.isEditing}>
+                                            <lightning-input
+                                                value={account.Phone}
+                                                data-record-id={account.Id}
+                                                data-field="Phone"
+                                                data-type="account"
+                                                onchange={handleFieldChange}
+                                                variant="label-hidden"
+                                                label="Phone"
+                                                type="tel"
+                                            ></lightning-input>
+                                        </template>
+                                    </td>
+
+                                    <!-- Industry -->
+                                    <td data-record-id={account.Id} data-field="Industry" data-type="account">
+                                        <template if:false={account.isEditing}>
+                                            <span class="editable-cell" onclick={handleCellClick} data-record-id={account.Id} data-field="Industry" data-type="account">
+                                                <template if:true={account.Industry}>{account.Industry}</template>
+                                                <template if:false={account.Industry}><span class="empty-cell">—</span></template>
+                                                <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                            </span>
+                                        </template>
+                                        <template if:true={account.isEditing}>
+                                            <lightning-combobox
+                                                value={account.Industry}
+                                                options={industryOptions}
+                                                data-record-id={account.Id}
+                                                data-field="Industry"
+                                                data-type="account"
+                                                onchange={handleFieldChange}
+                                                variant="label-hidden"
+                                                label="Industry"
+                                            ></lightning-combobox>
+                                        </template>
+                                    </td>
+
+                                    <!-- Annual Revenue -->
+                                    <td data-record-id={account.Id} data-field="AnnualRevenue" data-type="account">
+                                        <template if:false={account.isEditing}>
+                                            <span class="editable-cell" onclick={handleCellClick} data-record-id={account.Id} data-field="AnnualRevenue" data-type="account">
+                                                <template if:true={account.AnnualRevenue}>{account.formattedRevenue}</template>
+                                                <template if:false={account.AnnualRevenue}><span class="empty-cell">—</span></template>
+                                                <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                            </span>
+                                        </template>
+                                        <template if:true={account.isEditing}>
+                                            <lightning-input
+                                                value={account.AnnualRevenue}
+                                                data-record-id={account.Id}
+                                                data-field="AnnualRevenue"
+                                                data-type="account"
+                                                onchange={handleFieldChange}
+                                                variant="label-hidden"
+                                                label="Annual Revenue"
+                                                type="number"
+                                                formatter="currency"
+                                            ></lightning-input>
+                                        </template>
+                                    </td>
+
+                                    <!-- Row Actions -->
+                                    <td class="col-actions">
+                                        <template if:true={account.isEditing}>
+                                            <lightning-button-icon
+                                                icon-name="utility:check"
+                                                variant="success"
+                                                size="small"
+                                                alternative-text="Save"
+                                                title="Save"
+                                                data-record-id={account.Id}
+                                                data-type="account"
+                                                onclick={handleSaveRow}
+                                            ></lightning-button-icon>
+                                            <lightning-button-icon
+                                                icon-name="utility:close"
+                                                variant="bare"
+                                                size="small"
+                                                alternative-text="Cancel"
+                                                title="Cancel"
+                                                data-record-id={account.Id}
+                                                data-type="account"
+                                                onclick={handleCancelRow}
+                                            ></lightning-button-icon>
+                                        </template>
+                                        <template if:false={account.isEditing}>
+                                            <template if:true={account.isDirty}>
+                                                <lightning-icon icon-name="utility:warning" size="xx-small" title="Unsaved changes" class="dirty-indicator"></lightning-icon>
+                                            </template>
+                                        </template>
+                                    </td>
+                                </tr>
+
+                                <!-- Contact Rows (expanded) -->
+                                <template if:true={account.isExpanded}>
+                                    <template if:true={account.hasContacts}>
+                                        <!-- Contact sub-header -->
+                                        <tr key={account.contactHeaderKey} class="contact-subheader">
+                                            <td></td>
+                                            <td><strong>First Name</strong></td>
+                                            <td><strong>Last Name</strong></td>
+                                            <td><strong>Email</strong></td>
+                                            <td><strong>Phone / Title</strong></td>
+                                            <td></td>
+                                        </tr>
+                                        <template for:each={account.contacts} for:item="contact">
+                                            <tr key={contact.Id} class={contact.rowClass}>
+                                                <td class="col-indent"></td>
+                                                <!-- First Name -->
+                                                <td>
+                                                    <template if:false={contact.isEditing}>
+                                                        <span class="editable-cell" onclick={handleCellClick} data-record-id={contact.Id} data-field="FirstName" data-type="contact" data-account-id={account.Id}>
+                                                            <template if:true={contact.FirstName}>{contact.FirstName}</template>
+                                                            <template if:false={contact.FirstName}><span class="empty-cell">—</span></template>
+                                                            <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                                        </span>
+                                                    </template>
+                                                    <template if:true={contact.isEditing}>
+                                                        <lightning-input
+                                                            value={contact.FirstName}
+                                                            data-record-id={contact.Id}
+                                                            data-field="FirstName"
+                                                            data-type="contact"
+                                                            data-account-id={account.Id}
+                                                            onchange={handleFieldChange}
+                                                            variant="label-hidden"
+                                                            label="First Name"
+                                                        ></lightning-input>
+                                                    </template>
+                                                </td>
+                                                <!-- Last Name -->
+                                                <td>
+                                                    <template if:false={contact.isEditing}>
+                                                        <span class="editable-cell" onclick={handleCellClick} data-record-id={contact.Id} data-field="LastName" data-type="contact" data-account-id={account.Id}>
+                                                            {contact.LastName}
+                                                            <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                                        </span>
+                                                    </template>
+                                                    <template if:true={contact.isEditing}>
+                                                        <lightning-input
+                                                            value={contact.LastName}
+                                                            data-record-id={contact.Id}
+                                                            data-field="LastName"
+                                                            data-type="contact"
+                                                            data-account-id={account.Id}
+                                                            onchange={handleFieldChange}
+                                                            variant="label-hidden"
+                                                            label="Last Name"
+                                                        ></lightning-input>
+                                                    </template>
+                                                </td>
+                                                <!-- Email -->
+                                                <td>
+                                                    <template if:false={contact.isEditing}>
+                                                        <span class="editable-cell" onclick={handleCellClick} data-record-id={contact.Id} data-field="Email" data-type="contact" data-account-id={account.Id}>
+                                                            <template if:true={contact.Email}>{contact.Email}</template>
+                                                            <template if:false={contact.Email}><span class="empty-cell">—</span></template>
+                                                            <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                                        </span>
+                                                    </template>
+                                                    <template if:true={contact.isEditing}>
+                                                        <lightning-input
+                                                            value={contact.Email}
+                                                            data-record-id={contact.Id}
+                                                            data-field="Email"
+                                                            data-type="contact"
+                                                            data-account-id={account.Id}
+                                                            onchange={handleFieldChange}
+                                                            variant="label-hidden"
+                                                            label="Email"
+                                                            type="email"
+                                                        ></lightning-input>
+                                                    </template>
+                                                </td>
+                                                <!-- Phone / Title -->
+                                                <td>
+                                                    <template if:false={contact.isEditing}>
+                                                        <div>
+                                                            <span class="editable-cell" onclick={handleCellClick} data-record-id={contact.Id} data-field="Phone" data-type="contact" data-account-id={account.Id}>
+                                                                <template if:true={contact.Phone}>{contact.Phone}</template>
+                                                                <template if:false={contact.Phone}><span class="empty-cell">—</span></template>
+                                                                <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="editable-cell contact-title" onclick={handleCellClick} data-record-id={contact.Id} data-field="Title" data-type="contact" data-account-id={account.Id}>
+                                                                <template if:true={contact.Title}>{contact.Title}</template>
+                                                                <template if:false={contact.Title}><span class="empty-cell">—</span></template>
+                                                                <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-hint"></lightning-icon>
+                                                            </span>
+                                                        </div>
+                                                    </template>
+                                                    <template if:true={contact.isEditing}>
+                                                        <lightning-input
+                                                            value={contact.Phone}
+                                                            data-record-id={contact.Id}
+                                                            data-field="Phone"
+                                                            data-type="contact"
+                                                            data-account-id={account.Id}
+                                                            onchange={handleFieldChange}
+                                                            variant="label-hidden"
+                                                            label="Phone"
+                                                            type="tel"
+                                                        ></lightning-input>
+                                                        <lightning-input
+                                                            value={contact.Title}
+                                                            data-record-id={contact.Id}
+                                                            data-field="Title"
+                                                            data-type="contact"
+                                                            data-account-id={account.Id}
+                                                            onchange={handleFieldChange}
+                                                            variant="label-hidden"
+                                                            label="Title"
+                                                        ></lightning-input>
+                                                    </template>
+                                                </td>
+                                                <!-- Contact Actions -->
+                                                <td class="col-actions">
+                                                    <template if:true={contact.isEditing}>
+                                                        <lightning-button-icon
+                                                            icon-name="utility:check"
+                                                            variant="success"
+                                                            size="small"
+                                                            alternative-text="Save Contact"
+                                                            title="Save"
+                                                            data-record-id={contact.Id}
+                                                            data-type="contact"
+                                                            data-account-id={account.Id}
+                                                            onclick={handleSaveRow}
+                                                        ></lightning-button-icon>
+                                                        <lightning-button-icon
+                                                            icon-name="utility:close"
+                                                            variant="bare"
+                                                            size="small"
+                                                            alternative-text="Cancel"
+                                                            title="Cancel"
+                                                            data-record-id={contact.Id}
+                                                            data-type="contact"
+                                                            data-account-id={account.Id}
+                                                            onclick={handleCancelRow}
+                                                        ></lightning-button-icon>
+                                                    </template>
+                                                    <template if:false={contact.isEditing}>
+                                                        <template if:true={contact.isDirty}>
+                                                            <lightning-icon icon-name="utility:warning" size="xx-small" title="Unsaved changes" class="dirty-indicator"></lightning-icon>
+                                                        </template>
+                                                    </template>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    <template if:false={account.hasContacts}>
+                                        <tr key={account.noContactKey} class="no-contacts-row">
+                                            <td class="col-indent"></td>
+                                            <td colspan="4" class="slds-text-color_weak slds-p-left_small">No contacts found for this account.</td>
+                                            <td></td>
+                                        </tr>
+                                    </template>
+                                </template>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Bottom -->
+                <div class="pagination-bar slds-m-top_small">
+                    <lightning-button
+                        label="Previous"
+                        icon-name="utility:chevronleft"
+                        onclick={handlePrev}
+                        disabled={isPrevDisabled}
+                    ></lightning-button>
+                    <span class="slds-m-horizontal_medium page-info">
+                        Page {currentPage} of {totalPages} &nbsp;|&nbsp; {totalCount} Records
+                    </span>
+                    <lightning-button
+                        label="Next"
+                        icon-name="utility:chevronright"
+                        icon-position="right"
+                        onclick={handleNext}
+                        disabled={isNextDisabled}
+                    ></lightning-button>
+                </div>
+
+            </template>
+        </div>
+    </lightning-card>
+</template>

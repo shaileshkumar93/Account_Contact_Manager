@@ -1,0 +1,144 @@
+/* ── Table layout ─────────────────────────────────────────────────────────── */
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+thead th {
+    background-color: #f3f3f3;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.col-toggle {
+    width: 70px;
+    text-align: center;
+}
+
+.col-indent {
+    width: 70px;
+    background-color: #f9f9f9;
+}
+
+.col-actions {
+    width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* ── Account rows ─────────────────────────────────────────────────────────── */
+
+.account-row {
+    background-color: #fff;
+}
+
+.account-row:hover {
+    background-color: #f5f5f5;
+}
+
+/* ── Contact rows ─────────────────────────────────────────────────────────── */
+
+.contact-subheader td {
+    background-color: #e8f0fe;
+    font-size: 0.75rem;
+    color: #3c3c3c;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    border-top: 1px solid #c9d7f6;
+    border-bottom: 1px solid #c9d7f6;
+}
+
+.contact-row {
+    background-color: #f0f5ff;
+}
+
+.contact-row:hover {
+    background-color: #e4ecff;
+}
+
+.no-contacts-row td {
+    background-color: #fafafa;
+    font-style: italic;
+    padding: 8px;
+}
+
+/* ── Dirty / unsaved indicator ────────────────────────────────────────────── */
+
+.dirty-row {
+    border-left: 3px solid #ff9e0c !important;
+}
+
+.dirty-indicator {
+    color: #ff9e0c;
+}
+
+/* ── Editable cells ───────────────────────────────────────────────────────── */
+
+.editable-cell {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 4px;
+    padding: 2px 4px;
+    width: 100%;
+    min-height: 24px;
+    transition: background-color 0.15s ease;
+}
+
+.editable-cell:hover {
+    background-color: #e8f0fe;
+}
+
+.edit-hint {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    color: #5a94f0;
+    flex-shrink: 0;
+}
+
+.editable-cell:hover .edit-hint {
+    opacity: 1;
+}
+
+.empty-cell {
+    color: #9a9a9a;
+}
+
+.contact-title {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+/* ── Contact count badge ──────────────────────────────────────────────────── */
+
+.contact-count {
+    font-size: 0.7rem;
+    margin-left: 2px;
+    vertical-align: middle;
+}
+
+/* ── Pagination bar ───────────────────────────────────────────────────────── */
+
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.page-info {
+    font-size: 0.875rem;
+    color: #3c3c3c;
+}
+
+.page-size-select {
+    width: 130px;
+    display: flex;
+    align-items: center;
+}

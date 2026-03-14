@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sf project:*)",
+      "Bash(grep -v \"Status: -\\\\|Status: \\\\\\\\|Status: |\\\\|Status: In\")"
+    ]
+  }
+}

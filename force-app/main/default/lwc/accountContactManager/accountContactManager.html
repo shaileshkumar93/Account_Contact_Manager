@@ -1,6 +1,16 @@
 <template>
     <lightning-card title="Accounts &amp; Contacts" icon-name="standard:account">
-        <div slot="actions">
+        <div slot="actions" class="card-actions">
+            <div class={toggleWrapperClass}>
+                <lightning-input
+                    type="toggle"
+                    label="Chart View"
+                    checked={showChart}
+                    message-toggle-active=""
+                    message-toggle-inactive=""
+                    onchange={handleToggleChart}
+                ></lightning-input>
+            </div>
             <lightning-button
                 label="Save All Changes"
                 variant="brand"
@@ -23,35 +33,45 @@
             <template if:false={isLoading}>
 
                 <!-- Pagination Top -->
-                <div class="pagination-bar slds-m-bottom_small">
-                    <lightning-button
-                        label="Previous"
-                        icon-name="utility:chevronleft"
-                        onclick={handlePrev}
-                        disabled={isPrevDisabled}
-                    ></lightning-button>
-                    <span class="slds-m-horizontal_medium page-info">
-                        Page {currentPage} of {totalPages} &nbsp;|&nbsp; {totalCount} Records
-                    </span>
-                    <lightning-button
-                        label="Next"
-                        icon-name="utility:chevronright"
-                        icon-position="right"
-                        onclick={handleNext}
-                        disabled={isNextDisabled}
-                    ></lightning-button>
-
-                    <lightning-combobox
-                        label="Rows per page"
-                        variant="label-hidden"
-                        value={pageSize}
-                        options={pageSizeOptions}
-                        onchange={handlePageSizeChange}
-                        class="page-size-select"
-                    ></lightning-combobox>
+                <div class="pagination-bar slds-m-bottom_small" if:false={showChart}>
+                    <div class="pagination-center">
+                        <lightning-button
+                            label="Previous"
+                            icon-name="utility:chevronleft"
+                            onclick={handlePrev}
+                            disabled={isPrevDisabled}
+                        ></lightning-button>
+                        <span class="page-info">
+                            Page {currentPage} of {totalPages} &nbsp;|&nbsp; {totalCount} Records
+                        </span>
+                        <lightning-button
+                            label="Next"
+                            icon-name="utility:chevronright"
+                            icon-position="right"
+                            onclick={handleNext}
+                            disabled={isNextDisabled}
+                        ></lightning-button>
+                        <div class="pagination-divider"></div>
+                        <lightning-combobox
+                            label="Rows per page"
+                            variant="label-hidden"
+                            value={pageSizeString}
+                            options={pageSizeOptions}
+                            onchange={handlePageSizeChange}
+                            class="page-size-select"
+                        ></lightning-combobox>
+                    </div>
                 </div>
 
-                <!-- Table -->
+                <!-- Chart View -->
+                <template if:true={showChart}>
+                    <div class="chart-container">
+                        <canvas class="chart-canvas" width="900" height="400"></canvas>
+                    </div>
+                </template>
+
+                <!-- Table View -->
+                <template if:false={showChart}>
                 <div class="table-container">
                     <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
                         <thead>
@@ -374,25 +394,28 @@
                         </tbody>
                     </table>
                 </div>
+                </template><!-- end table view -->
 
                 <!-- Pagination Bottom -->
-                <div class="pagination-bar slds-m-top_small">
-                    <lightning-button
-                        label="Previous"
-                        icon-name="utility:chevronleft"
-                        onclick={handlePrev}
-                        disabled={isPrevDisabled}
-                    ></lightning-button>
-                    <span class="slds-m-horizontal_medium page-info">
-                        Page {currentPage} of {totalPages} &nbsp;|&nbsp; {totalCount} Records
-                    </span>
-                    <lightning-button
-                        label="Next"
-                        icon-name="utility:chevronright"
-                        icon-position="right"
-                        onclick={handleNext}
-                        disabled={isNextDisabled}
-                    ></lightning-button>
+                <div class="pagination-bar slds-m-top_small" if:false={showChart}>
+                    <div class="pagination-center">
+                        <lightning-button
+                            label="Previous"
+                            icon-name="utility:chevronleft"
+                            onclick={handlePrev}
+                            disabled={isPrevDisabled}
+                        ></lightning-button>
+                        <span class="page-info">
+                            Page {currentPage} of {totalPages} &nbsp;|&nbsp; {totalCount} Records
+                        </span>
+                        <lightning-button
+                            label="Next"
+                            icon-name="utility:chevronright"
+                            icon-position="right"
+                            onclick={handleNext}
+                            disabled={isNextDisabled}
+                        ></lightning-button>
+                    </div>
                 </div>
 
             </template>

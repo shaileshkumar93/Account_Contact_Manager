@@ -1,5 +1,7 @@
 import { LightningElement, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { loadScript } from 'lightning/platformResourceLoader';
+import chartjs from '@salesforce/resourceUrl/acmChartJs';
 import getAccountsWithContacts from '@salesforce/apex/AccountContactController.getAccountsWithContacts';
 import saveRecords from '@salesforce/apex/AccountContactController.saveRecords';
 
@@ -49,6 +51,7 @@ const PAGE_SIZE_OPTIONS = [
 export default class AccountContactManager extends LightningElement {
     @track accounts = [];
     @track isLoading = false;
+    @track showChart = false;
 
     currentPage = 1;
     pageSize = 10;
@@ -58,12 +61,25 @@ export default class AccountContactManager extends LightningElement {
     accountDrafts = {};
     contactDrafts = {};
 
+    // Chart state
+    _chartJsLoaded = false;
+    _chartInstance = null;
+
+    get toggleWrapperClass() {
+        return this.showChart ? 'toggle-wrapper toggle-wrapper_on' : 'toggle-wrapper toggle-wrapper_off';
+    }
+
     get industryOptions() {
         return INDUSTRY_OPTIONS;
     }
 
     get pageSizeOptions() {
         return PAGE_SIZE_OPTIONS;
+    }
+
+    // Combobox value must be a string to match option values
+    get pageSizeString() {
+        return String(this.pageSize);
     }
 
     get totalPages() {
@@ -138,6 +154,141 @@ export default class AccountContactManager extends LightningElement {
 
     connectedCallback() {
         this.loadData();
+        loadScript(this, chartjs)
+            .then(() => {
+                this._chartJsLoaded = true;
+                if (this.showChart && !this._chartInstance) {
+                    this.initializeChart();
+                }
+            })
+            .catch(error => {
+                this.showToast('Error', 'Failed to load Chart.js: ' + this.reduceError(error), 'error');
+            });
+    }
+
+    renderedCallback() {
+        try {
+            if (this.showChart && !this._chartInstance && this._chartJsLoaded) {
+                this.initializeChart();
+            }
+        } catch (e) {
+            this.showToast('renderedCallback Error', e.message, 'error');
+        }
+    }
+
+    // ── Chart ─────────────────────────────────────────────────────────────────
+
+    handleToggleChart(event) {
+        this.showChart = event.target.checked;
+        if (!this.showChart && this._chartInstance) {
+            this._chartInstance.destroy();
+            this._chartInstance = null;
+        }
+        // renderedCallback will call initializeChart() once canvas is in DOM
+    }
+
+    initializeChart() {
+        try {
+        const canvas = this.template.querySelector('canvas.chart-canvas');
+        if (!canvas) {
+            this.showToast('Chart Error', 'Canvas element not found in DOM', 'error');
+            return;
+        }
+
+        // eslint-disable-next-line no-undef
+        const ChartConstructor = window.Chart;
+        if (!ChartConstructor) {
+            this.showToast('Chart Error', 'window.Chart is undefined after loadScript', 'error');
+            return;
+        }
+
+        if (this._chartInstance) {
+            this._chartInstance.destroy();
+        }
+
+        const BAR_COLORS = [
+            'rgba(21,  137, 238, 0.75)',
+            'rgba(255, 99,  132, 0.75)',
+            'rgba(255, 159, 64,  0.75)',
+            'rgba(75,  192, 192, 0.75)',
+            'rgba(153, 102, 255, 0.75)',
+            'rgba(255, 205, 86,  0.75)',
+            'rgba(54,  162, 235, 0.75)',
+            'rgba(231, 76,  60,  0.75)',
+            'rgba(46,  204, 113, 0.75)',
+            'rgba(241, 196, 15,  0.75)'
+        ];
+        const BAR_BORDERS = BAR_COLORS.map(c => c.replace('0.75', '1'));
+
+        const data = this.processedAccounts;
+        const colors = data.map((_, i) => BAR_COLORS[i % BAR_COLORS.length]);
+        const borders = data.map((_, i) => BAR_BORDERS[i % BAR_BORDERS.length]);
+
+        this._chartInstance = new ChartConstructor(canvas, {
+            type: 'bar',
+            data: {
+                labels: data.map(a => a.Name),
+                datasets: [{
+                    label: 'Number of Contacts',
+                    data: data.map(a => a.contactCount),
+                    backgroundColor: colors,
+                    borderColor: borders,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Accounts',
+                            font: { weight: 'bold' }
+                        },
+                        ticks: { maxRotation: 45 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Contacts',
+                            font: { weight: 'bold' }
+                        },
+                        ticks: { stepSize: 1, precision: 0 }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    title: {
+                        display: true,
+                        text: 'Accounts & Contacts Overview',
+                        font: { size: 16 }
+                    }
+                }
+            }
+        });
+        } catch (e) {
+            this.showToast('initializeChart Error', e.message, 'error');
+        }
+    }
+
+    updateChart() {
+        if (!this._chartInstance) return;
+        const BAR_COLORS = [
+            'rgba(21,  137, 238, 0.75)', 'rgba(255, 99,  132, 0.75)',
+            'rgba(255, 159, 64,  0.75)', 'rgba(75,  192, 192, 0.75)',
+            'rgba(153, 102, 255, 0.75)', 'rgba(255, 205, 86,  0.75)',
+            'rgba(54,  162, 235, 0.75)', 'rgba(231, 76,  60,  0.75)',
+            'rgba(46,  204, 113, 0.75)', 'rgba(241, 196, 15,  0.75)'
+        ];
+        const data = this.processedAccounts;
+        this._chartInstance.data.labels = data.map(a => a.Name);
+        this._chartInstance.data.datasets[0].data = data.map(a => a.contactCount);
+        this._chartInstance.data.datasets[0].backgroundColor = data.map((_, i) => BAR_COLORS[i % BAR_COLORS.length]);
+        this._chartInstance.data.datasets[0].borderColor = data.map((_, i) => BAR_COLORS[i % BAR_COLORS.length].replace('0.75', '1'));
+        this._chartInstance.update();
     }
 
     loadData() {
@@ -166,6 +317,9 @@ export default class AccountContactManager extends LightningElement {
                     return updatedAcc;
                 });
                 this.totalCount = result.totalCount;
+                if (this.showChart && this._chartInstance) {
+                    this.updateChart();
+                }
             })
             .catch(error => {
                 this.showToast('Error', this.reduceError(error), 'error');

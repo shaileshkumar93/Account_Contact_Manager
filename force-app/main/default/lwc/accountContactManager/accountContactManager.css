@@ -127,18 +127,77 @@ thead th {
 
 .pagination-bar {
     display: flex;
+    justify-content: center;
+}
+
+.pagination-center {
+    display: inline-flex;
     align-items: center;
+    gap: 8px;
     flex-wrap: wrap;
-    gap: 4px;
+    justify-content: center;
+}
+
+.pagination-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #dddbda;
+    margin: 0 4px;
 }
 
 .page-info {
     font-size: 0.875rem;
     color: #3c3c3c;
+    white-space: nowrap;
 }
 
 .page-size-select {
-    width: 130px;
+    width: 160px;
+}
+
+/* ── Card actions (toggle + save button) ──────────────────────────────────── */
+
+.card-actions {
     display: flex;
     align-items: center;
+    gap: 12px;
+}
+
+/* Remove the internal top/bottom block spacing that lightning-input adds,
+   so the toggle sits flush with the button vertically */
+.toggle-wrapper {
+    --sds-c-input-spacing-block-start: 0rem;
+    --sds-c-input-spacing-block-end: 0rem;
+    line-height: 1;
+}
+
+/* Toggle OFF → red track + red hover */
+.toggle-wrapper_off {
+    --sds-c-input-toggle-color-background: #c23934;
+    --sds-c-input-toggle-color-background-hover: #a61c18;
+    --lwc-colorBackgroundToggle: #c23934;
+    --lwc-colorBackgroundToggleHover: #a61c18;
+}
+
+/* Toggle ON → green track + green hover */
+.toggle-wrapper_on {
+    --sds-c-input-toggle-color-background-checked: #2e7d32;
+    --sds-c-input-toggle-color-background-checked-hover: #1b5e20;
+    --lwc-colorBackgroundToggleChecked: #2e7d32;
+    --lwc-colorBackgroundToggleCheckedHover: #1b5e20;
+    --lwc-colorBrand: #2e7d32;
+    --lwc-colorBrandDark: #1b5e20;
+}
+
+/* ── Chart ────────────────────────────────────────────────────────────────── */
+
+.chart-container {
+    width: 100%;
+    overflow-x: auto;
+    padding: 8px 4px;
+}
+
+.chart-canvas {
+    display: block;
+    max-width: 100%;
 }

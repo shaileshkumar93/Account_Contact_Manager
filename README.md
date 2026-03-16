@@ -1,8 +1,8 @@
 # Account Contact Manager — Salesforce LWC Project
 
-A custom Salesforce Lightning Web Component (LWC) application that lets users view, browse, and inline-edit Account and Contact records from a single page — no page reloads required.
+A custom Salesforce Lightning Web Component (LWC) application that lets users view, browse, inline-edit Account and Contact records, and visualise data as a bar chart — all from a single page with no page reloads.
 
----
+-
 
 ## What Does This Project Do?
 
@@ -12,8 +12,9 @@ This project builds a custom app inside Salesforce that shows a list of **Accoun
 - **Expand** any account row to see its contacts listed below it
 - **Inline-edit** any field directly in the table by clicking on it — no need to open a separate edit form
 - **Save** changes one row at a time, or save all pending changes at once with the "Save All Changes" button
+- Switch to a **Chart View** using a toggle to see a bar chart of Accounts vs. number of Contacts — each bar is a different colour
 
----
+-
 
 ## Project Structure
 
@@ -31,6 +32,10 @@ force-app/main/default/
 │   ├── AccountContactController.cls        ← Apex class: fetches and saves data
 │   └── AccountContactControllerTest.cls    ← Test class: verifies the Apex logic works
 │
+├── staticresources/
+│   ├── acmChartJs.js                  ← Chart.js v4 UMD build (loaded at runtime)
+│   └── acmChartJs.resource-meta.xml
+│
 ├── applications/
 │   └── AccountContactApp.app-meta.xml  ← Defines the custom Lightning App
 │
@@ -44,7 +49,7 @@ force-app/main/default/
     └── Account_Contact_Manager_PS.permissionset-meta.xml  ← Controls who can access this app
 ```
 
----
+-
 
 ## Key Concepts Explained (for beginners)
 
@@ -70,7 +75,7 @@ A **Permission Set** is a collection of settings that grant users access to spec
 - Access to run the Apex controller
 - Read and edit permissions on Account and Contact fields
 
----
+-
 
 ## How the Component Works
 
@@ -103,9 +108,22 @@ Changes are tracked as "drafts" in memory. A row with unsaved changes shows an *
 Each row has **Save (✓)** and **Cancel (✗)** buttons that appear when editing. The "Save All Changes" button in the card header saves every pending change in one go.
 
 ### 4. Pagination
-At the top and bottom of the table there are **Previous / Next** buttons and a **rows-per-page** dropdown (5, 10, 20, or 50). The total record count and current page number are displayed between the buttons.
+At the top and bottom of the table there are **Previous / Next** buttons and a **rows-per-page** dropdown (5, 10, 20, or 50). The total record count and current page number are displayed between the buttons. Both the buttons and the dropdown are centred on the page.
 
----
+### 5. Chart View
+A **Chart View** toggle sits in the top-right corner of the card, next to the "Save All Changes" button.
+
+- **Toggle OFF (red)** — the default table view is shown with full inline editing and pagination
+- **Toggle ON (green)** — the table is replaced by a **Bar Chart** powered by Chart.js
+
+The chart shows every account from the **current page** on the X-axis and the **number of related contacts** on the Y-axis. Each bar gets a distinct colour. You can still use the Previous / Next pagination buttons while in chart view — the chart updates automatically when you navigate pages.
+
+**How it works technically:**
+1. Chart.js is loaded from a Salesforce Static Resource (`acmChartJs`) using `loadScript` from `lightning/platformResourceLoader`
+2. The chart is initialised via `renderedCallback` once both the canvas element is in the DOM and the library has finished loading
+3. `responsive` and `maintainAspectRatio` are both set to `false` to avoid a known Salesforce Lightning Web Security (LWS) issue where `ResizeObserver` is not accessible as a constructor inside the LWS sandbox
+
+-
 
 ## Files Deep Dive
 
@@ -123,7 +141,7 @@ saveRecords(accounts, contacts)
 
 ### `AccountContactControllerTest.cls`
 
-Contains **18 test methods** that verify the Apex logic works correctly:
+Contains test methods that verify the Apex logic works correctly:
 
 | Test Group | What it checks |
 |---|---|
@@ -135,7 +153,7 @@ Contains **18 test methods** that verify the Apex logic works correctly:
 | Bulk save | Multiple records saved at once |
 | Edge case tests | Null inputs, empty lists, mixed null/empty inputs |
 
----
+-
 
 ## Setup & Deployment
 
@@ -164,7 +182,7 @@ sf org open --target-org myOrg
 ```
 Then navigate to the **App Launcher** (the 9-dot grid icon) and search for **"Account Contact Manager"**.
 
----
+-
 
 ## How Inline Editing Works (Technical Detail)
 
@@ -178,7 +196,7 @@ The component uses a **draft values pattern**:
 
 This means if you cancel, your changes are thrown away and the original data is restored — nothing was ever written to the database.
 
----
+-
 
 ## Troubleshooting
 
@@ -188,8 +206,10 @@ This means if you cancel, your changes are thrown away and the original data is 
 | App not visible in App Launcher | Permission set not assigned | Assign `Account_Contact_Manager_PS` to the user |
 | Apex test failures | Org validation rules require extra fields | Add the required fields to test data in `AccountContactControllerTest.cls` |
 | Inline edits not saving | User lacks edit permission on the object | Check the permission set's object permissions |
+| Chart shows blank / white area | `ResizeObserver` blocked by LWS sandbox | Already fixed — `responsive: false` and `maintainAspectRatio: false` bypass this |
+| Chart does not load at all | Static resource `acmChartJs` not deployed | Run `sf project deploy start --source-dir force-app/main/default/staticresources` |
 
----
+-
 
 ## Technologies Used
 
@@ -199,4 +219,5 @@ This means if you cancel, your changes are thrown away and the original data is 
 | Apex | Backend data access and DML |
 | SOQL | Querying Account and Contact records |
 | SLDS (Salesforce Lightning Design System) | Styling and layout |
+| Chart.js v4 | Bar chart rendering in the Chart View |
 | Salesforce Metadata API | Deploying the app, tab, page, and permission set |
